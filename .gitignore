@@ -31,3 +31,9 @@ Thumbs.db
 *.jpeg
 *.pdf
 !README.md
+
+# Project specific
+cache/
+logs/
+*.log
+.streamlit/

@@ -37,3 +37,4 @@ cache/
 logs/
 *.log
 .streamlit/
+output/

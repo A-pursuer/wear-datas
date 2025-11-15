@@ -94,6 +94,8 @@ def render_sidebar() -> UIConfig:
             key="speed"
         )
 
+    st.sidebar.caption("💡 可用组合: 轻磨-正常、重磨-正常、正常-重磨")
+
     # 传感器选择
     st.sidebar.header("📡 传感器选择")
 
@@ -224,10 +226,11 @@ def render_comparison_sidebar() -> Dict:
         selected_states = st.sidebar.multiselect(
             "磨损状态",
             options=list(GEAR_STATES.keys()),
-            default=["normal", "light_wear", "heavy_wear"],
+            default=["light_wear", "heavy_wear"],  # 仅选择有效组合（与normal从动轮配对）
             format_func=lambda x: GEAR_STATES[x],
             key="selected_states"
         )
+        st.sidebar.caption("💡 对比模式固定从动轮为'正常'状态")
 
         return {
             "mode": comparison_mode,
@@ -260,6 +263,8 @@ def render_comparison_sidebar() -> Dict:
             options=TORQUES,
             key="comp_torque2"
         )
+
+        st.sidebar.caption("💡 可用组合: 轻磨-正常、重磨-正常、正常-重磨")
 
         # 选择要对比的传感器
         st.sidebar.header("📡 选择传感器")
@@ -310,6 +315,8 @@ def render_comparison_sidebar() -> Dict:
             format_func=lambda x: AXES[x],
             key="comp_axis3"
         )
+
+        st.sidebar.caption("💡 可用组合: 轻磨-正常、重磨-正常、正常-重磨")
 
         # 选择要对比的扭矩
         st.sidebar.header("⚡ 选择扭矩")

@@ -243,6 +243,7 @@ def render_comparison_sidebar() -> Dict:
             "主动轮状态",
             options=list(GEAR_STATES.keys()),
             format_func=lambda x: GEAR_STATES[x],
+            index=1,  # 默认选择 'light_wear' (轻磨损)
             key="comp_drive_state"
         )
 
@@ -250,6 +251,7 @@ def render_comparison_sidebar() -> Dict:
             "从动轮状态",
             options=list(GEAR_STATES.keys()),
             format_func=lambda x: GEAR_STATES[x],
+            index=0,  # 默认选择 'normal' (正常)
             key="comp_driven_state"
         )
 
@@ -283,6 +285,7 @@ def render_comparison_sidebar() -> Dict:
             "主动轮状态",
             options=list(GEAR_STATES.keys()),
             format_func=lambda x: GEAR_STATES[x],
+            index=1,  # 默认选择 'light_wear' (轻磨损)
             key="comp_drive_state3"
         )
 
@@ -290,6 +293,7 @@ def render_comparison_sidebar() -> Dict:
             "从动轮状态",
             options=list(GEAR_STATES.keys()),
             format_func=lambda x: GEAR_STATES[x],
+            index=0,  # 默认选择 'normal' (正常)
             key="comp_driven_state3"
         )
 

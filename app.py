@@ -342,6 +342,7 @@ def page_comparison():
         st.subheader(f"🔬 磨损状态对比 - {SENSORS[comp_config['sensor']]}_{AXES[comp_config['axis']]}")
 
         features_dict = {}
+        waveforms_dict = {}
 
         for state in comp_config['states']:
             with st.spinner(f"加载 {GEAR_STATES[state]}..."):
@@ -371,10 +372,41 @@ def page_comparison():
                         '波峰因子': td_features.crest_factor
                     }
 
+                    # 准备波形数据（前1秒）
+                    wave_samples = min(int(1.0 * signal_data.sampling_rate), len(signal_data.time_series))
+                    waveforms_dict[GEAR_STATES[state]] = signal_data.time_series[:wave_samples]
+
         if features_dict:
             # 绘制对比图
             comp_plotter = ComparisonPlotter()
 
+            # 波形叠加对比
+            if waveforms_dict:
+                st.markdown("### 📊 磨损状态波形叠加对比")
+                col_w1, col_w2 = st.columns(2)
+
+                with col_w1:
+                    fig_wave = comp_plotter.plot_waveform_overlay(
+                        waveforms_dict,
+                        sampling_rate=15360,
+                        title="不同磨损状态波形（前1秒）",
+                        normalize=False
+                    )
+                    st.plotly_chart(fig_wave, use_container_width=True)
+
+                with col_w2:
+                    fig_wave_norm = comp_plotter.plot_waveform_overlay(
+                        waveforms_dict,
+                        sampling_rate=15360,
+                        title="归一化磨损状态波形",
+                        normalize=True
+                    )
+                    st.plotly_chart(fig_wave_norm, use_container_width=True)
+
+                st.caption("💡 磨损程度越重，振动幅值通常越大，波形也会出现更多冲击特征")
+
+            # 时域特征对比
+            st.markdown("### 📈 时域特征对比")
             col1, col2 = st.columns(2)
             with col1:
                 fig1 = comp_plotter.plot_feature_comparison(
@@ -453,6 +485,51 @@ def page_comparison():
 
         if time_features_dict:
             comp_plotter = ComparisonPlotter()
+
+            # 波形叠加对比
+            st.markdown("### 📊 传感器波形叠加对比")
+
+            # 准备波形数据（使用前1秒数据）
+            waveforms_dict = {}
+            for sensor_axis in comp_config['sensors']:
+                sensor, axis = sensor_axis.split('_')
+                sensor_label = f"{SENSORS[sensor]}_{AXES[axis]}"
+
+                signal_data = load_signal_data(
+                    st.session_state.data_loader,
+                    comp_config['drive_state'],
+                    comp_config['driven_state'],
+                    comp_config['torque'],
+                    sensor,
+                    axis
+                )
+
+                if signal_data:
+                    samples = min(int(1.0 * signal_data.sampling_rate), len(signal_data.time_series))
+                    waveforms_dict[sensor_label] = signal_data.time_series[:samples]
+
+            if waveforms_dict:
+                col_w1, col_w2 = st.columns(2)
+
+                with col_w1:
+                    fig_wave = comp_plotter.plot_waveform_overlay(
+                        waveforms_dict,
+                        sampling_rate=15360,  # 固定采样率
+                        title="传感器波形叠加（前1秒）",
+                        normalize=False
+                    )
+                    st.plotly_chart(fig_wave, use_container_width=True)
+
+                with col_w2:
+                    fig_wave_norm = comp_plotter.plot_waveform_overlay(
+                        waveforms_dict,
+                        sampling_rate=15360,
+                        title="归一化传感器波形",
+                        normalize=True
+                    )
+                    st.plotly_chart(fig_wave_norm, use_container_width=True)
+
+                st.caption("💡 对比不同传感器位置的振动波形差异")
 
             # 时域特征对比
             st.markdown("### 📈 时域特征对比")
@@ -580,6 +657,38 @@ def page_comparison():
 
         if time_features_dict:
             comp_plotter = ComparisonPlotter()
+
+            # 波形叠加对比
+            if signal_data_dict:
+                st.markdown("### 📊 原始波形叠加对比")
+
+                # 准备波形数据（使用前1秒数据以保持清晰）
+                waveforms_dict = {}
+                for label, sig_data in signal_data_dict.items():
+                    samples = min(int(1.0 * sig_data.sampling_rate), len(sig_data.time_series))
+                    waveforms_dict[label] = sig_data.time_series[:samples]
+
+                col_w1, col_w2 = st.columns(2)
+
+                with col_w1:
+                    fig_wave = comp_plotter.plot_waveform_overlay(
+                        waveforms_dict,
+                        sampling_rate=signal_data.sampling_rate,
+                        title="波形叠加对比（前1秒）",
+                        normalize=False
+                    )
+                    st.plotly_chart(fig_wave, use_container_width=True)
+
+                with col_w2:
+                    fig_wave_norm = comp_plotter.plot_waveform_overlay(
+                        waveforms_dict,
+                        sampling_rate=signal_data.sampling_rate,
+                        title="归一化波形叠加对比",
+                        normalize=True
+                    )
+                    st.plotly_chart(fig_wave_norm, use_container_width=True)
+
+                st.caption("💡 左图显示原始幅值对比，右图归一化后便于观察波形形状差异")
 
             # 时域特征对比
             st.markdown("### 📈 时域特征对比")

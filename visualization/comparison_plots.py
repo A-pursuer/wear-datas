@@ -239,6 +239,171 @@ class ComparisonPlotter:
 
         return fig
 
+    def plot_waveform_overlay(
+        self,
+        waveforms_dict: Dict[str, np.ndarray],
+        sampling_rate: int,
+        title: Optional[str] = None,
+        time_range: Optional[tuple] = None,
+        normalize: bool = False
+    ) -> go.Figure:
+        """
+        绘制波形叠加对比图
+
+        Args:
+            waveforms_dict: 波形字典 {条件名: 波形数组}
+            sampling_rate: 采样率 (Hz)
+            title: 图表标题
+            time_range: 时间范围 (start_sec, end_sec)，None表示全部
+            normalize: 是否归一化
+
+        Returns:
+            Plotly图表对象
+
+        Examples:
+            >>> waveforms = {
+            ...     '10Nm': signal_10nm,
+            ...     '15Nm': signal_15nm
+            ... }
+            >>> fig = plotter.plot_waveform_overlay(waveforms, 15360)
+        """
+        fig = go.Figure()
+
+        # 处理时间范围
+        for idx, (label, waveform) in enumerate(waveforms_dict.items()):
+            # 创建时间轴
+            duration = len(waveform) / sampling_rate
+            time_axis = np.linspace(0, duration, len(waveform))
+
+            # 应用时间范围
+            if time_range:
+                start_idx = int(time_range[0] * sampling_rate)
+                end_idx = int(time_range[1] * sampling_rate)
+                time_axis = time_axis[start_idx:end_idx]
+                waveform = waveform[start_idx:end_idx]
+
+            # 归一化处理
+            plot_waveform = waveform.copy()
+            if normalize:
+                plot_waveform = (plot_waveform - np.mean(plot_waveform)) / (np.std(plot_waveform) + 1e-10)
+
+            # 添加波形
+            fig.add_trace(go.Scatter(
+                x=time_axis,
+                y=plot_waveform,
+                mode='lines',
+                name=label,
+                line=dict(
+                    color=self.config.colors[idx % len(self.config.colors)],
+                    width=1.5
+                ),
+                hovertemplate='时间: %{x:.4f}s<br>幅值: %{y:.6f}<extra></extra>',
+                opacity=0.8
+            ))
+
+        # 更新布局
+        plot_title = title or "波形叠加对比"
+        fig.update_layout(
+            title=dict(
+                text=plot_title,
+                x=0.5,
+                xanchor='center'
+            ),
+            xaxis_title="时间 (s)",
+            yaxis_title="归一化幅值" if normalize else "幅值",
+            width=self.config.width,
+            height=self.config.height,
+            template=self.config.template,
+            showlegend=True,
+            hovermode='x unified',
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="right",
+                x=0.99
+            )
+        )
+
+        logger.debug(f"波形叠加图绘制完成: {len(waveforms_dict)}个波形")
+
+        return fig
+
+    def plot_spectrum_overlay(
+        self,
+        spectrums_dict: Dict[str, tuple],
+        title: Optional[str] = None,
+        freq_range: Optional[tuple] = None,
+        normalize: bool = False
+    ) -> go.Figure:
+        """
+        绘制频谱叠加对比图
+
+        Args:
+            spectrums_dict: 频谱字典 {条件名: (频率数组, 幅值数组)}
+            title: 图表标题
+            freq_range: 频率范围 (min_freq, max_freq)，None表示全部
+            normalize: 是否归一化
+
+        Returns:
+            Plotly图表对象
+        """
+        fig = go.Figure()
+
+        for idx, (label, (freqs, mags)) in enumerate(spectrums_dict.items()):
+            # 应用频率范围
+            plot_freqs = freqs
+            plot_mags = mags
+
+            if freq_range:
+                mask = (freqs >= freq_range[0]) & (freqs <= freq_range[1])
+                plot_freqs = freqs[mask]
+                plot_mags = mags[mask]
+
+            # 归一化处理
+            if normalize and len(plot_mags) > 0:
+                plot_mags = plot_mags / (np.max(plot_mags) + 1e-10)
+
+            # 添加频谱
+            fig.add_trace(go.Scatter(
+                x=plot_freqs,
+                y=plot_mags,
+                mode='lines',
+                name=label,
+                line=dict(
+                    color=self.config.colors[idx % len(self.config.colors)],
+                    width=1.5
+                ),
+                hovertemplate='频率: %{x:.2f}Hz<br>幅值: %{y:.6f}<extra></extra>',
+                opacity=0.8
+            ))
+
+        # 更新布局
+        plot_title = title or "频谱叠加对比"
+        fig.update_layout(
+            title=dict(
+                text=plot_title,
+                x=0.5,
+                xanchor='center'
+            ),
+            xaxis_title="频率 (Hz)",
+            yaxis_title="归一化幅值" if normalize else "幅值",
+            width=self.config.width,
+            height=self.config.height,
+            template=self.config.template,
+            showlegend=True,
+            hovermode='x unified',
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="right",
+                x=0.99
+            )
+        )
+
+        logger.debug(f"频谱叠加图绘制完成: {len(spectrums_dict)}个频谱")
+
+        return fig
+
 
 # ====================================
 # 便捷函数

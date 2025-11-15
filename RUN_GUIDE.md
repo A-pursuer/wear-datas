@@ -2,15 +2,33 @@
 
 ## 🚀 快速开始
 
-### 1. 安装依赖
+### 方式一：使用 uv（推荐）⚡
+
+[uv](https://docs.astral.sh/uv/) 是一个极快的Python包管理器，比pip快10-100倍。
 
 ```bash
-pip install -r requirements.txt
+# 1. 安装uv（如果尚未安装）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. 同步依赖（自动创建虚拟环境）
+uv sync
+
+# 3. 运行应用
+uv run streamlit run app.py
 ```
 
-### 2. 运行应用
+### 方式二：使用传统pip
 
 ```bash
+# 1. 创建虚拟环境（可选但推荐）
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate  # Windows
+
+# 2. 安装依赖
+pip install -r requirements.txt
+
+# 3. 运行应用
 streamlit run app.py
 ```
 
@@ -84,6 +102,54 @@ streamlit run app.py
 - **转速**: 1000 rpm
 - **采样率**: 15360 Hz
 - **时长**: 30 秒
+
+## 🔧 uv 包管理器使用指南
+
+### 为什么使用 uv？
+
+- **极速**: 比pip快10-100倍，使用Rust编写
+- **可靠**: 精确的依赖解析，避免版本冲突
+- **现代**: 原生支持`pyproject.toml`，符合PEP标准
+- **隔离**: 自动管理虚拟环境
+
+### 常用命令
+
+```bash
+# 同步依赖（安装所有依赖）
+uv sync
+
+# 只安装生产依赖（不含开发依赖）
+uv sync --no-dev
+
+# 添加新依赖
+uv add numpy pandas
+
+# 添加开发依赖
+uv add --dev pytest black
+
+# 移除依赖
+uv remove package-name
+
+# 更新依赖
+uv lock --upgrade
+
+# 在虚拟环境中运行命令
+uv run python script.py
+uv run streamlit run app.py
+
+# 激活虚拟环境（可选）
+source .venv/bin/activate  # Linux/Mac
+.venv\Scripts\activate     # Windows
+```
+
+### 项目依赖管理
+
+所有依赖都定义在 `pyproject.toml` 文件中：
+
+- **生产依赖**: `[project.dependencies]`
+- **开发依赖**: `[dependency-groups.dev]`
+
+锁定的精确版本存储在 `uv.lock` 文件中，确保环境一致性。
 
 ## 🔧 高级功能
 

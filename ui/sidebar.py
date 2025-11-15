@@ -19,7 +19,7 @@ import streamlit as st
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, asdict
 
-from config.settings import GEAR_STATES, TORQUES, SPEEDS, SENSORS, AXES
+from config.settings import GEAR_STATES, TORQUES, SPEEDS, SENSORS, AXES, VALID_COMBINATIONS
 
 
 @dataclass
@@ -71,11 +71,13 @@ def render_sidebar() -> UIConfig:
         )
 
     with col2:
+        # 根据主动轮状态动态限制从动轮选项
+        available_driven_states = VALID_COMBINATIONS.get(drive_state, list(GEAR_STATES.keys()))
         driven_state = st.selectbox(
             "从动轮状态",
-            options=list(GEAR_STATES.keys()),
+            options=available_driven_states,
             format_func=lambda x: GEAR_STATES[x],
-            index=0,  # 默认选择 'normal' (正常)
+            index=0,  # 默认选择第一个可用选项
             key="driven_state"
         )
 
@@ -94,7 +96,7 @@ def render_sidebar() -> UIConfig:
             key="speed"
         )
 
-    st.sidebar.caption("💡 可用组合: 轻磨-正常、重磨-正常、正常-重磨")
+    st.sidebar.caption("✅ 从动轮选项已根据主动轮状态自动过滤")
 
     # 传感器选择
     st.sidebar.header("📡 传感器选择")
@@ -250,11 +252,13 @@ def render_comparison_sidebar() -> Dict:
             key="comp_drive_state"
         )
 
+        # 根据主动轮状态动态限制从动轮选项
+        available_driven_states = VALID_COMBINATIONS.get(drive_state, list(GEAR_STATES.keys()))
         driven_state = st.sidebar.selectbox(
             "从动轮状态",
-            options=list(GEAR_STATES.keys()),
+            options=available_driven_states,
             format_func=lambda x: GEAR_STATES[x],
-            index=0,  # 默认选择 'normal' (正常)
+            index=0,  # 默认选择第一个可用选项
             key="comp_driven_state"
         )
 
@@ -264,7 +268,7 @@ def render_comparison_sidebar() -> Dict:
             key="comp_torque2"
         )
 
-        st.sidebar.caption("💡 可用组合: 轻磨-正常、重磨-正常、正常-重磨")
+        st.sidebar.caption("✅ 从动轮选项已根据主动轮状态自动过滤")
 
         # 选择要对比的传感器
         st.sidebar.header("📡 选择传感器")
@@ -294,11 +298,13 @@ def render_comparison_sidebar() -> Dict:
             key="comp_drive_state3"
         )
 
+        # 根据主动轮状态动态限制从动轮选项
+        available_driven_states = VALID_COMBINATIONS.get(drive_state, list(GEAR_STATES.keys()))
         driven_state = st.sidebar.selectbox(
             "从动轮状态",
-            options=list(GEAR_STATES.keys()),
+            options=available_driven_states,
             format_func=lambda x: GEAR_STATES[x],
-            index=0,  # 默认选择 'normal' (正常)
+            index=0,  # 默认选择第一个可用选项
             key="comp_driven_state3"
         )
 
@@ -316,7 +322,7 @@ def render_comparison_sidebar() -> Dict:
             key="comp_axis3"
         )
 
-        st.sidebar.caption("💡 可用组合: 轻磨-正常、重磨-正常、正常-重磨")
+        st.sidebar.caption("✅ 从动轮选项已根据主动轮状态自动过滤")
 
         # 选择要对比的扭矩
         st.sidebar.header("⚡ 选择扭矩")

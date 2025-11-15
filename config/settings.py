@@ -390,6 +390,14 @@ GEAR_STATES = {
     'heavy_wear': '重磨损'
 }
 
+# 有效的齿轮状态组合映射（主动轮 -> 可用从动轮列表）
+# 根据实际数据集动态生成，确保用户只能选择存在的组合
+VALID_COMBINATIONS = {
+    'normal': ['heavy_wear'],      # 正常-重磨
+    'light_wear': ['normal'],      # 轻磨-正常
+    'heavy_wear': ['normal'],      # 重磨-正常
+}
+
 # 扭矩选项
 TORQUES = [10, 15]
 

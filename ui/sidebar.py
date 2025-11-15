@@ -66,6 +66,7 @@ def render_sidebar() -> UIConfig:
             "主动轮状态",
             options=list(GEAR_STATES.keys()),
             format_func=lambda x: GEAR_STATES[x],
+            index=1,  # 默认选择 'light_wear' (轻磨损)
             key="drive_state"
         )
 
@@ -74,6 +75,7 @@ def render_sidebar() -> UIConfig:
             "从动轮状态",
             options=list(GEAR_STATES.keys()),
             format_func=lambda x: GEAR_STATES[x],
+            index=0,  # 默认选择 'normal' (正常)
             key="driven_state"
         )
 

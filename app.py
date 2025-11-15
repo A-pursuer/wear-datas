@@ -394,6 +394,274 @@ def page_comparison():
         else:
             st.warning("⚠️ 没有可用的数据进行对比")
 
+    elif comp_config['mode'] == "传感器位置对比":
+        st.subheader(f"🔬 传感器位置对比 - {GEAR_STATES[comp_config['drive_state']]}-{GEAR_STATES[comp_config['driven_state']]}")
+
+        # 添加传感器说明
+        st.info(f"""
+        **传感器位置对比分析**
+        - 对比传感器: {', '.join([f"{SENSORS[s.split('_')[0]]}_{AXES[s.split('_')[1]]}" for s in comp_config['sensors']])}
+        - 齿轮状态: {GEAR_STATES[comp_config['drive_state']]}-{GEAR_STATES[comp_config['driven_state']]}
+        - 扭矩: {comp_config['torque']}Nm
+        - 分析维度: 不同位置传感器的振动响应特性
+        """)
+
+        time_features_dict = {}
+        freq_features_dict = {}
+
+        for sensor_axis in comp_config['sensors']:
+            sensor, axis = sensor_axis.split('_')
+            sensor_label = f"{SENSORS[sensor]}_{AXES[axis]}"
+
+            with st.spinner(f"加载 {sensor_label}..."):
+                signal_data = load_signal_data(
+                    st.session_state.data_loader,
+                    comp_config['drive_state'],
+                    comp_config['driven_state'],
+                    comp_config['torque'],
+                    sensor,
+                    axis
+                )
+
+                if signal_data:
+                    # 使用前10秒数据
+                    test_samples = min(10 * signal_data.sampling_rate, len(signal_data))
+                    signal_segment = signal_data.time_series[:test_samples]
+
+                    # 提取时域特征
+                    td_analyzer = TimeDomainAnalyzer()
+                    td_features = td_analyzer.extract_features(signal_segment)
+
+                    time_features_dict[sensor_label] = {
+                        'RMS': td_features.rms,
+                        '峰值': td_features.peak,
+                        '峰度': td_features.kurtosis,
+                        '偏度': td_features.skewness,
+                        '波峰因子': td_features.crest_factor
+                    }
+
+                    # 提取频域特征
+                    freq_analyzer = FrequencyAnalyzer(signal_data.sampling_rate)
+                    freq_result = freq_analyzer.compute_fft(signal_segment)
+
+                    freq_features_dict[sensor_label] = {
+                        '主频幅值': freq_result.dominant_freq_magnitude,
+                        '频谱能量': freq_result.total_power,
+                        '频谱熵': freq_result.spectral_entropy,
+                        '频率重心': freq_result.spectral_centroid,
+                    }
+
+        if time_features_dict:
+            comp_plotter = ComparisonPlotter()
+
+            # 时域特征对比
+            st.markdown("### 📈 时域特征对比")
+            col1, col2 = st.columns(2)
+            with col1:
+                fig1 = comp_plotter.plot_feature_comparison(
+                    time_features_dict,
+                    title="传感器时域特征对比",
+                    normalize=False
+                )
+                st.plotly_chart(fig1, use_container_width=True)
+
+            with col2:
+                fig2 = comp_plotter.plot_radar_chart(
+                    time_features_dict,
+                    title="时域特征雷达图"
+                )
+                st.plotly_chart(fig2, use_container_width=True)
+
+            # 频域特征对比
+            if freq_features_dict:
+                st.markdown("### 🌊 频域特征对比")
+                col3, col4 = st.columns(2)
+                with col3:
+                    fig3 = comp_plotter.plot_feature_comparison(
+                        freq_features_dict,
+                        title="传感器频域特征对比",
+                        normalize=False
+                    )
+                    st.plotly_chart(fig3, use_container_width=True)
+
+                with col4:
+                    fig4 = comp_plotter.plot_radar_chart(
+                        freq_features_dict,
+                        title="频域特征雷达图"
+                    )
+                    st.plotly_chart(fig4, use_container_width=True)
+
+            # 传感器位置分析
+            st.markdown("### 📍 传感器位置说明")
+            col5, col6, col7 = st.columns(3)
+
+            with col5:
+                st.markdown("**传感器A**")
+                st.markdown("📌 主动轴输入轴承处")
+                st.caption("监测主动轴和输入轴承的振动特性")
+                if "传感器A_X轴" in time_features_dict:
+                    st.metric("RMS", f"{time_features_dict['传感器A_X轴']['RMS']:.4f}")
+
+            with col6:
+                st.markdown("**传感器B**")
+                st.markdown("📌 从动轴输入处")
+                st.caption("监测齿轮啮合区域的振动特性（最敏感）")
+                if "传感器B_X轴" in time_features_dict:
+                    st.metric("RMS", f"{time_features_dict['传感器B_X轴']['RMS']:.4f}")
+
+            with col7:
+                st.markdown("**传感器C**")
+                st.markdown("📌 从动轴输出处")
+                st.caption("监测从动轴输出端的振动特性")
+                if "传感器C_X轴" in time_features_dict:
+                    st.metric("RMS", f"{time_features_dict['传感器C_X轴']['RMS']:.4f}")
+
+        else:
+            st.warning("⚠️ 没有可用的数据进行对比")
+
+    elif comp_config['mode'] == "工况参数对比":
+        st.subheader(f"🔬 工况参数对比 - {GEAR_STATES[comp_config['drive_state']]}-{GEAR_STATES[comp_config['driven_state']]}")
+
+        # 添加工况说明
+        st.info(f"""
+        **工况参数对比分析**
+        - 对比扭矩: {', '.join([f'{t}Nm' for t in comp_config['torques']])}
+        - 齿轮状态: {GEAR_STATES[comp_config['drive_state']]}-{GEAR_STATES[comp_config['driven_state']]}
+        - 传感器: {SENSORS[comp_config['sensor']]}_{AXES[comp_config['axis']]}
+        - 分析维度: 扭矩变化对振动特性的影响
+        """)
+
+        time_features_dict = {}
+        freq_features_dict = {}
+        signal_data_dict = {}
+
+        for torque in comp_config['torques']:
+            torque_label = f"{torque}Nm"
+
+            with st.spinner(f"加载 {torque_label} 数据..."):
+                signal_data = load_signal_data(
+                    st.session_state.data_loader,
+                    comp_config['drive_state'],
+                    comp_config['driven_state'],
+                    torque,
+                    comp_config['sensor'],
+                    comp_config['axis']
+                )
+
+                if signal_data:
+                    signal_data_dict[torque_label] = signal_data
+
+                    # 使用前10秒数据
+                    test_samples = min(10 * signal_data.sampling_rate, len(signal_data))
+                    signal_segment = signal_data.time_series[:test_samples]
+
+                    # 提取时域特征
+                    td_analyzer = TimeDomainAnalyzer()
+                    td_features = td_analyzer.extract_features(signal_segment)
+
+                    time_features_dict[torque_label] = {
+                        'RMS': td_features.rms,
+                        '峰值': td_features.peak,
+                        '峰度': td_features.kurtosis,
+                        '偏度': td_features.skewness,
+                        '波峰因子': td_features.crest_factor
+                    }
+
+                    # 提取频域特征
+                    freq_analyzer = FrequencyAnalyzer(signal_data.sampling_rate)
+                    freq_result = freq_analyzer.compute_fft(signal_segment)
+
+                    freq_features_dict[torque_label] = {
+                        '主频幅值': freq_result.dominant_freq_magnitude,
+                        '频谱能量': freq_result.total_power,
+                        '频谱熵': freq_result.spectral_entropy,
+                        '频率重心': freq_result.spectral_centroid,
+                    }
+
+        if time_features_dict:
+            comp_plotter = ComparisonPlotter()
+
+            # 时域特征对比
+            st.markdown("### 📈 时域特征对比")
+            col1, col2 = st.columns(2)
+            with col1:
+                fig1 = comp_plotter.plot_feature_comparison(
+                    time_features_dict,
+                    title="时域特征对比",
+                    normalize=False
+                )
+                st.plotly_chart(fig1, use_container_width=True)
+
+            with col2:
+                fig2 = comp_plotter.plot_radar_chart(
+                    time_features_dict,
+                    title="时域特征雷达图"
+                )
+                st.plotly_chart(fig2, use_container_width=True)
+
+            # 频域特征对比
+            if freq_features_dict:
+                st.markdown("### 🌊 频域特征对比")
+                col3, col4 = st.columns(2)
+                with col3:
+                    fig3 = comp_plotter.plot_feature_comparison(
+                        freq_features_dict,
+                        title="频域特征对比",
+                        normalize=False
+                    )
+                    st.plotly_chart(fig3, use_container_width=True)
+
+                with col4:
+                    fig4 = comp_plotter.plot_radar_chart(
+                        freq_features_dict,
+                        title="频域特征雷达图"
+                    )
+                    st.plotly_chart(fig4, use_container_width=True)
+
+            # 工况对比分析结论
+            st.markdown("### 📊 对比分析")
+            col5, col6 = st.columns(2)
+
+            with col5:
+                st.markdown("**时域特征趋势**")
+                if len(time_features_dict) >= 2:
+                    torques_sorted = sorted(comp_config['torques'])
+                    if len(torques_sorted) >= 2:
+                        t1_label = f"{torques_sorted[0]}Nm"
+                        t2_label = f"{torques_sorted[-1]}Nm"
+
+                        rms_change = (time_features_dict[t2_label]['RMS'] / time_features_dict[t1_label]['RMS'] - 1) * 100
+                        peak_change = (time_features_dict[t2_label]['峰值'] / time_features_dict[t1_label]['峰值'] - 1) * 100
+
+                        st.metric(
+                            label=f"RMS变化 ({t1_label}→{t2_label})",
+                            value=f"{time_features_dict[t2_label]['RMS']:.4f}",
+                            delta=f"{rms_change:+.1f}%"
+                        )
+                        st.metric(
+                            label=f"峰值变化 ({t1_label}→{t2_label})",
+                            value=f"{time_features_dict[t2_label]['峰值']:.4f}",
+                            delta=f"{peak_change:+.1f}%"
+                        )
+
+            with col6:
+                st.markdown("**频域特征趋势**")
+                if len(freq_features_dict) >= 2 and len(torques_sorted) >= 2:
+                    energy_change = (freq_features_dict[t2_label]['频谱能量'] / freq_features_dict[t1_label]['频谱能量'] - 1) * 100
+
+                    st.metric(
+                        label=f"频谱能量变化 ({t1_label}→{t2_label})",
+                        value=f"{freq_features_dict[t2_label]['频谱能量']:.2e}",
+                        delta=f"{energy_change:+.1f}%"
+                    )
+                    st.metric(
+                        label="频率重心",
+                        value=f"{freq_features_dict[t2_label]['频率重心']:.2f} Hz"
+                    )
+
+        else:
+            st.warning("⚠️ 没有可用的数据进行对比")
+
     else:
         st.info("ℹ️ 其他对比模式正在开发中...")
 

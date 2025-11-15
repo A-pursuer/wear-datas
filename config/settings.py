@@ -379,6 +379,38 @@ def validate_config() -> bool:
         return False
 
 
+# ====================================
+# UI常量
+# ====================================
+
+# 齿轮状态映射
+GEAR_STATES = {
+    'normal': '正常',
+    'light_wear': '轻磨损',
+    'heavy_wear': '重磨损'
+}
+
+# 扭矩选项
+TORQUES = [10, 15]
+
+# 转速选项
+SPEEDS = [1000]
+
+# 传感器映射
+SENSORS = {
+    'A': '传感器A',
+    'B': '传感器B',
+    'C': '传感器C'
+}
+
+# 轴向映射
+AXES = {
+    'X': 'X轴',
+    'Y': 'Y轴',
+    'Z': 'Z轴'
+}
+
+
 if __name__ == "__main__":
     # 验证配置
     if validate_config():

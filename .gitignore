@@ -6,6 +6,7 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
 build/
 dist/
@@ -31,3 +32,10 @@ Thumbs.db
 *.jpeg
 *.pdf
 !README.md
+
+# Project specific
+cache/
+logs/
+*.log
+.streamlit/
+output/

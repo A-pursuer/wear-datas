@@ -1,0 +1,110 @@
+[project]
+name = "gear-wear-analysis"
+version = "1.0.0"
+description = "齿轮磨损数据分析系统 - 基于振动信号的智能诊断平台"
+authors = [
+    {name = "马辉教授课题组"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+keywords = ["gear", "wear", "vibration", "signal-processing", "fault-diagnosis"]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    # 核心框架
+    "streamlit>=1.28.0",
+    "plotly>=5.17.0",
+
+    # 数据处理
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+
+    # 信号处理
+    "scipy>=1.11.0",
+    "PyWavelets>=1.4.1",
+
+    # 性能优化
+    "numba>=0.58.0",
+
+    # 工具库
+    "python-dateutil>=2.8.2",
+    "pytz>=2023.3",
+
+    # 系统监控
+    "psutil>=5.9.0",
+
+    # 日志
+    "loguru>=0.7.0",
+
+    # 可视化增强
+    "kaleido>=0.2.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/A-pursuer/wear-datas"
+Repository = "https://github.com/A-pursuer/wear-datas"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["config", "data", "processing", "visualization", "ui"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | env
+  | build
+  | dist
+  | __pycache__
+  | \.eggs
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+addopts = "-v --cov=. --cov-report=term-missing"
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+]

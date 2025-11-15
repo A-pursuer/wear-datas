@@ -343,6 +343,7 @@ def page_comparison():
 
         features_dict = {}
         waveforms_dict = {}
+        spectrums_dict = {}
 
         for state in comp_config['states']:
             with st.spinner(f"加载 {GEAR_STATES[state]}..."):
@@ -376,6 +377,11 @@ def page_comparison():
                     wave_samples = min(int(1.0 * signal_data.sampling_rate), len(signal_data.time_series))
                     waveforms_dict[GEAR_STATES[state]] = signal_data.time_series[:wave_samples]
 
+                    # 计算频谱数据
+                    freq_analyzer = FrequencyAnalyzer(signal_data.sampling_rate)
+                    freq_result = freq_analyzer.compute_fft(signal_segment)
+                    spectrums_dict[GEAR_STATES[state]] = (freq_result.frequencies, freq_result.magnitudes)
+
         if features_dict:
             # 绘制对比图
             comp_plotter = ComparisonPlotter()
@@ -404,6 +410,31 @@ def page_comparison():
                     st.plotly_chart(fig_wave_norm, use_container_width=True)
 
                 st.caption("💡 磨损程度越重，振动幅值通常越大，波形也会出现更多冲击特征")
+
+            # 频谱叠加对比
+            if spectrums_dict:
+                st.markdown("### 🌊 磨损状态频谱叠加对比")
+                col_s1, col_s2 = st.columns(2)
+
+                with col_s1:
+                    fig_spec = comp_plotter.plot_spectrum_overlay(
+                        spectrums_dict,
+                        title="不同磨损状态频谱对比",
+                        freq_range=(0, 3000),
+                        normalize=False
+                    )
+                    st.plotly_chart(fig_spec, use_container_width=True)
+
+                with col_s2:
+                    fig_spec_norm = comp_plotter.plot_spectrum_overlay(
+                        spectrums_dict,
+                        title="归一化磨损状态频谱对比",
+                        freq_range=(0, 3000),
+                        normalize=True
+                    )
+                    st.plotly_chart(fig_spec_norm, use_container_width=True)
+
+                st.caption("💡 频谱对比可直观显示不同磨损状态下的频率成分差异，归一化后便于观察频率分布特征")
 
             # 时域特征对比
             st.markdown("### 📈 时域特征对比")
@@ -440,6 +471,7 @@ def page_comparison():
 
         time_features_dict = {}
         freq_features_dict = {}
+        spectrums_dict = {}
 
         for sensor_axis in comp_config['sensors']:
             sensor, axis = sensor_axis.split('_')
@@ -482,6 +514,9 @@ def page_comparison():
                         '频谱熵': freq_result.spectral_entropy,
                         '频率重心': freq_result.spectral_centroid,
                     }
+
+                    # 保存频谱数据用于叠加对比
+                    spectrums_dict[sensor_label] = (freq_result.frequencies, freq_result.magnitudes)
 
         if time_features_dict:
             comp_plotter = ComparisonPlotter()
@@ -530,6 +565,31 @@ def page_comparison():
                     st.plotly_chart(fig_wave_norm, use_container_width=True)
 
                 st.caption("💡 对比不同传感器位置的振动波形差异")
+
+            # 频谱叠加对比
+            if spectrums_dict:
+                st.markdown("### 🌊 传感器频谱叠加对比")
+                col_s1, col_s2 = st.columns(2)
+
+                with col_s1:
+                    fig_spec = comp_plotter.plot_spectrum_overlay(
+                        spectrums_dict,
+                        title="传感器位置频谱对比",
+                        freq_range=(0, 3000),
+                        normalize=False
+                    )
+                    st.plotly_chart(fig_spec, use_container_width=True)
+
+                with col_s2:
+                    fig_spec_norm = comp_plotter.plot_spectrum_overlay(
+                        spectrums_dict,
+                        title="归一化传感器频谱对比",
+                        freq_range=(0, 3000),
+                        normalize=True
+                    )
+                    st.plotly_chart(fig_spec_norm, use_container_width=True)
+
+                st.caption("💡 不同传感器位置的频谱特性可反映振动传递路径和衰减特性")
 
             # 时域特征对比
             st.markdown("### 📈 时域特征对比")
@@ -611,6 +671,7 @@ def page_comparison():
         time_features_dict = {}
         freq_features_dict = {}
         signal_data_dict = {}
+        spectrums_dict = {}
 
         for torque in comp_config['torques']:
             torque_label = f"{torque}Nm"
@@ -655,6 +716,9 @@ def page_comparison():
                         '频率重心': freq_result.spectral_centroid,
                     }
 
+                    # 保存频谱数据用于叠加对比
+                    spectrums_dict[torque_label] = (freq_result.frequencies, freq_result.magnitudes)
+
         if time_features_dict:
             comp_plotter = ComparisonPlotter()
 
@@ -689,6 +753,31 @@ def page_comparison():
                     st.plotly_chart(fig_wave_norm, use_container_width=True)
 
                 st.caption("💡 左图显示原始幅值对比，右图归一化后便于观察波形形状差异")
+
+            # 频谱叠加对比
+            if spectrums_dict:
+                st.markdown("### 🌊 工况频谱叠加对比")
+                col_s1, col_s2 = st.columns(2)
+
+                with col_s1:
+                    fig_spec = comp_plotter.plot_spectrum_overlay(
+                        spectrums_dict,
+                        title="扭矩变化频谱对比",
+                        freq_range=(0, 3000),
+                        normalize=False
+                    )
+                    st.plotly_chart(fig_spec, use_container_width=True)
+
+                with col_s2:
+                    fig_spec_norm = comp_plotter.plot_spectrum_overlay(
+                        spectrums_dict,
+                        title="归一化扭矩频谱对比",
+                        freq_range=(0, 3000),
+                        normalize=True
+                    )
+                    st.plotly_chart(fig_spec_norm, use_container_width=True)
+
+                st.caption("💡 扭矩变化会影响频谱幅值和能量分布，归一化对比有助于观察频率成分的相对变化")
 
             # 时域特征对比
             st.markdown("### 📈 时域特征对比")
